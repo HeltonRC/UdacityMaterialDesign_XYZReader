@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.Loader;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -14,6 +15,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
+import android.text.Layout;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.util.TypedValue;
@@ -45,7 +47,6 @@ public class ArticleListActivity extends AppCompatActivity implements
     private Toolbar mToolbar;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private RecyclerView mRecyclerView;
-
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss");
     // Use default locale format
     private SimpleDateFormat outputFormat = new SimpleDateFormat();
@@ -57,14 +58,14 @@ public class ArticleListActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_article_list);
 
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        mToolbar = findViewById(R.id.toolbar);
 
 
         final View toolbarContainerView = findViewById(R.id.toolbar_container);
 
-        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
+        mSwipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        mRecyclerView = findViewById(R.id.recycler_view);
         getLoaderManager().initLoader(0, null, this);
 
         if (savedInstanceState == null) {
@@ -115,7 +116,13 @@ public class ArticleListActivity extends AppCompatActivity implements
         Adapter adapter = new Adapter(cursor);
         adapter.setHasStableIds(true);
         mRecyclerView.setAdapter(adapter);
-        int columnCount = getResources().getInteger(R.integer.list_column_count);
+        int columnCount;
+        if (!getResources().getBoolean(R.bool.tablet_device) &
+                (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)){
+                columnCount = getResources().getInteger(R.integer.list_column_count_port);
+        } else {
+                columnCount = getResources().getInteger(R.integer.list_column_count);
+        }
         StaggeredGridLayoutManager sglm =
                 new StaggeredGridLayoutManager(columnCount, StaggeredGridLayoutManager.VERTICAL);
         mRecyclerView.setLayoutManager(sglm);
