@@ -16,34 +16,33 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:contentScrim="@android:color/transparent"
+            app:expandedTitleMarginEnd="64dp"
+            app:expandedTitleMarginStart="36dp"
+            app:expandedTitleTextAppearance="@style/TitleStyle"
             app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
             <ImageView
                 android:id="@+id/photo"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/detail_photo_height"
-                android:scaleType="centerCrop"
                 android:fitsSystemWindows="true"
+                android:scaleType="centerCrop"
                 app:layout_collapseMode="parallax"
-                />
-
-            <View
-                android:layout_height="112dp"
-                android:layout_width="match_parent"
-                android:background="@drawable/photo_background_protection"/>
+                android:transitionName="image_transition"/>
 
             <android.support.v7.widget.Toolbar
                 android:id="@+id/detail_navigation_toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@android:color/transparent"
+                app:layout_collapseMode="pin"
+                app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
 
-                app:layout_collapseMode="pin">
             </android.support.v7.widget.Toolbar>
 
         </android.support.design.widget.CollapsingToolbarLayout>
     </android.support.design.widget.AppBarLayout>
-    
+
 
     <android.support.v4.widget.NestedScrollView
         android:id="@+id/scrollview"
@@ -106,16 +105,17 @@
 
     </android.support.v4.widget.NestedScrollView>
 
-    <android.support.design.widget.FloatingActionButton android:id="@+id/share_fab"
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/share_fab"
         app:fabSize="normal"
         app:borderWidth="0dp"
-        android:layout_gravity="bottom|end"
-        android:layout_marginRight="@dimen/fab_margin"
-        android:layout_marginBottom="@dimen/fab_margin"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:layout_anchor="@id/meta_bar"
+        app:layout_anchorGravity="bottom|right|end"
         android:src="@drawable/ic_share"
         android:elevation="@dimen/fab_elevation"
-        android:contentDescription="@string/action_share" />
+        android:contentDescription="@string/action_share"
+        />
 
 </android.support.design.widget.CoordinatorLayout>

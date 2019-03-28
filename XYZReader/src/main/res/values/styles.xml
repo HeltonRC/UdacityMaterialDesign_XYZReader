@@ -29,7 +29,8 @@
     <style name="AppTheme.DetailAct" parent="@style/AppTheme"></style>
 
     <style name="TitleStyle" parent="Base.TextAppearance.AppCompat.Subhead">
-        <item name="android:textColor">@color/text_color</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">18sp</item>
     </style>
 
     <style name="Body1Style" parent="Base.TextAppearance.AppCompat.Body1">

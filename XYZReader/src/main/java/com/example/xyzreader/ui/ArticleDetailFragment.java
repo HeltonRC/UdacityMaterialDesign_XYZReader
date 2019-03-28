@@ -1,7 +1,10 @@
 package com.example.xyzreader.ui;
 
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
 import android.app.Fragment;
 import android.app.LoaderManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
@@ -18,9 +21,11 @@ import java.util.GregorianCalendar;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ShareCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.NestedScrollView;
@@ -29,6 +34,8 @@ import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
+import android.transition.Transition;
+import android.transition.TransitionSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -78,6 +85,8 @@ public class ArticleDetailFragment extends Fragment implements
     private CollapsingToolbarLayout mCollapsingToolbarLayout;
     private Toolbar mDetailToolbar;
     private String mTitle;
+    private FloatingActionButton mShareFab;
+    private TextView mTitleView;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -93,6 +102,7 @@ public class ArticleDetailFragment extends Fragment implements
         fragment.setArguments(arguments);
         return fragment;
     }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -133,8 +143,9 @@ public class ArticleDetailFragment extends Fragment implements
 //        mPhotoContainerView = mRootView.findViewById(R.id.photo_container);
 
         mStatusBarColorDrawable = new ColorDrawable(0);
+        mShareFab = mRootView.findViewById(R.id.share_fab);
 
-        mRootView.findViewById(R.id.share_fab).setOnClickListener(new View.OnClickListener() {
+        mShareFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 startActivity(Intent.createChooser(ShareCompat.IntentBuilder.from(getActivity())
@@ -159,18 +170,24 @@ public class ArticleDetailFragment extends Fragment implements
 
             @Override
             public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                float range = (float) -appBarLayout.getTotalScrollRange();
+                mPhotoView.setImageAlpha((int) (255 * (1.0f - (float) verticalOffset / range)));
+
                 if(scrollRange == -1) {
                     scrollRange = appBarLayout.getTotalScrollRange();
                 }
                 if(scrollRange + verticalOffset == 0) {
-                    //when fully collapsed, show title
                     mCollapsingToolbarLayout.setTitle(mTitle);
                     mDetailToolbar.setBackgroundColor(ContextCompat.getColor(getActivity(), R.color.theme_primary));
+                    mShareFab.hide();
+                    mTitleView.setVisibility(View.INVISIBLE);
                     isShow = true;
+
                 } else if (isShow) {
-                    //remove the title, set color back to transparent
                     mCollapsingToolbarLayout.setTitle("");
                     mDetailToolbar.setBackgroundColor(Color.TRANSPARENT);
+                    mShareFab.show();
+                    mTitleView.setVisibility(View.VISIBLE);
                     isShow=false;
                 }
             }
@@ -187,12 +204,14 @@ public class ArticleDetailFragment extends Fragment implements
         bindViews();
         return mRootView;
     }
+
+
     private void bindViews() {
         if (mRootView == null) {
             return;
         }
 
-        TextView titleView = mRootView.findViewById(R.id.article_title);
+        mTitleView = mRootView.findViewById(R.id.article_title);
         TextView bylineView = mRootView.findViewById(R.id.article_byline);
         bylineView.setMovementMethod(new LinkMovementMethod());
         TextView bodyView = mRootView.findViewById(R.id.article_body);
@@ -204,7 +223,8 @@ public class ArticleDetailFragment extends Fragment implements
             mRootView.setVisibility(View.VISIBLE);
             mRootView.animate().alpha(1);
             mTitle = mCursor.getString(ArticleLoader.Query.TITLE);
-            titleView.setText(mTitle);
+            //mCollapsingToolbarLayout.setTitle(mTitle);
+            mTitleView.setText(mTitle);
             bylineView.setText(Html.fromHtml(
                     DateUtils.getRelativeTimeSpanString(
                             mCursor.getLong(ArticleLoader.Query.PUBLISHED_DATE),
@@ -228,7 +248,6 @@ public class ArticleDetailFragment extends Fragment implements
                                 mPhotoView.setImageBitmap(imageContainer.getBitmap());
                                 mRootView.findViewById(R.id.meta_bar)
                                         .setBackgroundColor(mMutedColor);
-
                             }
                         }
 
@@ -239,11 +258,11 @@ public class ArticleDetailFragment extends Fragment implements
                     });
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                scheduleStartPostponedTransition(titleView);
+                scheduleStartPostponedTransition(mTitleView);
             }
         } else {
             mRootView.setVisibility(View.GONE);
-            titleView.setText("N/A");
+            mTitleView.setText("N/A");
             bylineView.setText("N/A" );
             bodyView.setText("N/A");
         }
@@ -260,6 +279,39 @@ public class ArticleDetailFragment extends Fragment implements
                             return true;
                         }
                     });
+        }
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        TransitionSet transitionSet = (TransitionSet) getSharedElementEnterTransition();
+        if (transitionSet != null) {
+            transitionSet.addListener(new Transition.TransitionListener() {
+                @Override
+                public void onTransitionEnd(@NonNull Transition transition) {
+                    // remove listener as otherwise there are side-effects
+                    transition.removeListener(this);
+                    // do something here
+                    final int startScrollPos =
+                            getResources().getDimensionPixelSize(
+                                    R.dimen.init_scroll_up_distance);
+                    Animator animator = ObjectAnimator.ofInt(
+                            mScrollView,
+                            "scrollY",
+                            startScrollPos).setDuration(300);
+                    animator.start();
+                }
+
+                @Override
+                public void onTransitionStart(@NonNull Transition transition) {}
+                @Override
+                public void onTransitionCancel(@NonNull Transition transition) {}
+                @Override
+                public void onTransitionPause(@NonNull Transition transition) {}
+                @Override
+                public void onTransitionResume(@NonNull Transition transition) {}
+            });
         }
     }
 
